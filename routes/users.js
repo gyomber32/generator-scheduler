@@ -4,18 +4,26 @@ var http = require('http');
 
 const baseURL = 'http://localhost:3100/api/Ages/getAge?'
 
-router.get('/age/quantity=:quantity', function (request, result) {
-  
-  let parameters = {
-    quantity: request.params.quantity
-  }
+router.get('/', function (req, res, next) {
+  /* config json will come from the request */
+  Promise.all([agePromise]).then(function (result) {
+    res.send(result);
+  }).catch(function (error) {
+    res.send(error);
+  });
+});
 
-  const url = baseURL + 'quantity=' + parameters.quantity;
-  var body = '';
-  http.get(url, function (res) {
-    res.on('data', data => {
+var agePromise = new Promise(function (resolve, reject) {
+  http.get('http://localhost:3100/api/Ages/getAge?quantity=1', function (res, req) {
+    var body = '';
+    res.on("data", function (data) {
       body += data;
-      result.send(body);
+    });
+    res.on("end", function () {
+      resolve(body);
+    });
+    res.on('error', function (error) {
+      reject(error);
     });
   });
 });
@@ -50,5 +58,12 @@ router.get('/age=:age&quantity=:quantity', function (req, res, next) {
     }
   });
 });
+
+
+Promise.all([agePromise]).then(
+  function ([agePromise]) {
+    return agePromise;
+  }
+)
 
 module.exports = router;
