@@ -4,7 +4,6 @@ var http = require('http');
 var request = require('request');
 
 /* Socket setup */
-
 const server = require('http').createServer(express);
 const io = require('socket.io')(server);
 
