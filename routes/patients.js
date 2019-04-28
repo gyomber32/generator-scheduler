@@ -32,11 +32,9 @@ io.on('connection', socket => {
     let tobaccoUse = config.tobaccoUse;
     let lungSound = config.lungSound;
     let quantity = config.quantity;
-    let path = config.path;
 
     getPat(gender, age, height, weight, systolicBloodPressure, diastolicBloodPressure, bloodGlucose, bloodOxygen, tobaccoUse, lungSound, quantity).then(patients => {
       socket.emit('data', patients);
-      console.log(process.platform)
       fs.writeFile('savedPatients/' + fileName(), JSON.stringify(patients), function (err) {
         if (err) throw err;
         console.log('File saved');
