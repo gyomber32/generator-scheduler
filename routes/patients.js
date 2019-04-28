@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var http = require('http');
 var request = require('request');
+var fs = require('fs');
 
 /* Socket setup */
 const server = require('http').createServer(express);
@@ -32,8 +33,13 @@ io.on('connection', socket => {
     let lungSound = config.lungSound;
     let quantity = config.quantity;
 
-    getPat(gender, age, height, weight, systolicBloodPressure, diastolicBloodPressure, bloodGlucose, bloodOxygen, tobaccoUse, lungSound, quantity).then(data => {
-      socket.emit('data', data);
+    getPat(gender, age, height, weight, systolicBloodPressure, diastolicBloodPressure, bloodGlucose, bloodOxygen, tobaccoUse, lungSound, quantity).then(patients => {
+      socket.emit('data', patients);
+      fs.writeFile('savedPatients/' + fileName(), JSON.stringify(patients), function (err) {
+        if (err) throw err;
+        console.log('File saved');
+      }
+      );
     });
 
   });
@@ -639,6 +645,23 @@ async function makePatient(quantity) {
     clearVariables();
     resolve(patient);
   });
+}
+
+function fileName() {
+  let today = new Date();
+  let yyyy = today.getFullYear();
+  let mm = today.getMonth() + 1;
+  let dd = today.getDate();
+
+  if (dd < 10) {
+    dd = '0' + dd;
+  }
+
+  if (mm < 10) {
+    mm = '0' + mm;
+  }
+
+  return 'patients_' + yyyy + '-' + mm + '-' + dd + '.json';
 }
 
 server.listen(3001);
