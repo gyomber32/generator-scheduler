@@ -4,6 +4,9 @@ var http = require('http');
 var request = require('request');
 var fs = require('fs');
 
+/* Scheduler config */
+var schedule = require('node-schedule');
+
 /* Socket setup */
 const server = require('http').createServer(express);
 const io = require('socket.io')(server);
@@ -21,6 +24,8 @@ var lungSoundTemp = new Array();
 io.on('connection', socket => {
   socket.on("config", config => {
 
+    console.log(config);
+
     let gender = config.gender;
     let age = config.age;
     let height = config.height;
@@ -32,23 +37,53 @@ io.on('connection', socket => {
     let tobaccoUse = config.tobaccoUse;
     let lungSound = config.lungSound;
     let quantity = config.quantity;
+    let saveToFile = config.saveToFile;
+    let watching = config.watching;
+    let typeOfGenerating = config.typeOfGenerating;
+    let dateAndTime = config.dateAndTime;
+    let endPoints = config.endPoints;
 
-    getPat(gender, age, height, weight, systolicBloodPressure, diastolicBloodPressure, bloodGlucose, bloodOxygen, tobaccoUse, lungSound, quantity).then(patients => {
-      socket.emit('data', patients);
-      fs.writeFile('savedPatients/' + fileName(), JSON.stringify(patients), function (err) {
-        if (err) throw err;
-        console.log('File saved');
-      }
-      );
-    });
+    if (typeOfGenerating == 'Egyszeri adatgenerálás') {
+      getData(gender, age, height, weight, systolicBloodPressure, diastolicBloodPressure, bloodGlucose, bloodOxygen, tobaccoUse, lungSound, quantity).then(patients => {
+        if (saveToFile == true) {
+          fs.writeFile('savedPatients/' + fileName(), JSON.stringify(patients), function (err) {
+            if (err) throw err;
+            console.log('File saved');
+          });
+        }
+        if (watching == false) {
+          for (let i = 0; i < quantity; i++) {
+            /*endPoints.forEach(endpoint => {
+              http.post(endpoint, patients["patient_" + i]);
+            });*/
+          }
+        }
+        if (watching == true) {
+          for (let i = 0; i < quantity; i++) {
+            /*endPoints.forEach(endpoint => {
+              const response = http.post(endpoint, patients["patient_" + i]);
+              if (response.status == '200') {
+                patient["patient_" + i].outcome = 'Sikeres';
+              } else {
+                patient["patient_" + i].outcome = 'Sikertelen';
+              }
+            });*/
+            console.log('Patient sent: ', patients["patient_" + i]);
+            socket.emit('data', patients["patient_" + i]);
+          }
+        }
+      });
+    }
+
+    if (typeOfGenerating == 'Ütemezett adatgenerálás') {
+      /* dateAndTime needs to be formatted for scheduler */
+      let job = schedule.scheduleJob(dateAndTime, function () {
+        /* TO DO */
+      });
+    }
 
   });
 });
-
-async function getPat(gender, age, height, weight, systolicBloodPressure, diastolicBloodPressure, bloodGlucose, bloodOxygen, tobaccoUse, lungSound, quantity) {
-  await getData(gender, age, height, weight, systolicBloodPressure, diastolicBloodPressure, bloodGlucose, bloodOxygen, tobaccoUse, lungSound, quantity);
-  return await makePatient(quantity);
-}
 
 async function getData(gender, age, height, weight, systolicBloodPressure, diastolicBloodPressure, bloodGlucose, bloodOxygen, tobaccoUse, lungSound, quantity) {
 
@@ -325,7 +360,7 @@ async function getData(gender, age, height, weight, systolicBloodPressure, diast
       console.log(error);
     });
   }
-
+  return await makePatient(quantity);
 }
 
 function getGender(quantity, gender) {
