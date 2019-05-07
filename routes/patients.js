@@ -1,11 +1,14 @@
 var express = require('express');
 var router = express.Router();
-var http = require('http');
 var request = require('request');
 var fs = require('fs');
 
 /* Scheduler config */
 var schedule = require('node-schedule');
+
+/* XMLHttpRequest */
+var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+var httpRequest = new XMLHttpRequest();
 
 /* Socket setup */
 const server = require('http').createServer(express);
@@ -45,40 +48,82 @@ io.on('connection', socket => {
 
     if (typeOfGenerating == 'Egyszeri adatgenerálás') {
       getData(gender, age, height, weight, systolicBloodPressure, diastolicBloodPressure, bloodGlucose, bloodOxygen, tobaccoUse, lungSound, quantity).then(patients => {
+
         if (saveToFile == true) {
           fs.writeFile('savedPatients/' + fileName(), JSON.stringify(patients), function (err) {
             if (err) throw err;
             console.log('File saved');
           });
         }
+
         if (watching == false) {
           for (let i = 0; i < quantity; i++) {
-            /*endPoints.forEach(endpoint => {
-              http.post(endpoint, patients["patient_" + i]);
-            });*/
+            endPoints.forEach(endpoint => {
+              httpRequest.open('POST', endpoint, false);
+              httpRequest.send(patients["patient_" + i]);
+            });
+            console.log(respose);
           }
         }
+
         if (watching == true) {
           for (let i = 0; i < quantity; i++) {
-            /*endPoints.forEach(endpoint => {
-              const response = http.post(endpoint, patients["patient_" + i]);
-              if (response.status == '200') {
-                patient["patient_" + i].outcome = 'Sikeres';
+            endPoints.forEach(endpoint => {
+              httpRequest.open('POST', endpoint, false);
+              httpRequest.send(patients["patient_" + i]);
+              if (httpRequest.status == '200') {
+                patients["patient_" + i].outcome = 'Sikeres';
               } else {
-                patient["patient_" + i].outcome = 'Sikertelen';
+                patients["patient_" + i].outcome = 'Sikertelen';
               }
-            });*/
+            });
+            patients["patient_" + i].outcome = 'Sikertelen'
             console.log('Patient sent: ', patients["patient_" + i]);
             socket.emit('data', patients["patient_" + i]);
           }
         }
+
       });
     }
 
     if (typeOfGenerating == 'Ütemezett adatgenerálás') {
-      /* dateAndTime needs to be formatted for scheduler */
-      let job = schedule.scheduleJob(dateAndTime, function () {
-        /* TO DO */
+      /* parameters are: year, month, day, hours, minutes, seconds*/
+      const date = new Date(dateAndTime[0], dateAndTime[1], dateAndTime[2], dateAndTime[3], dateAndTime[4], 0);
+      let job = schedule.scheduleJob(date, function () {
+
+        if (saveToFile == true) {
+          fs.writeFile('savedPatients/' + fileName(), JSON.stringify(patients), function (err) {
+            if (err) throw err;
+            console.log('File saved');
+          });
+        }
+
+        if (watching == false) {
+          for (let i = 0; i < quantity; i++) {
+            endPoints.forEach(endpoint => {
+              httpRequest.open('POST', endpoint, false);
+              httpRequest.send(patients["patient_" + i]);
+            });
+            console.log(respose);
+          }
+        }
+
+        if (watching == true) {
+          for (let i = 0; i < quantity; i++) {
+            endPoints.forEach(endpoint => {
+              httpRequest.open('POST', endpoint, false);
+              httpRequest.send(patients["patient_" + i]);
+              if (httpRequest.status == '200') {
+                patients["patient_" + i].outcome = 'Sikeres';
+              } else {
+                patients["patient_" + i].outcome = 'Sikertelen';
+              }
+            });
+            console.log('Patient sent: ', patients["patient_" + i]);
+            socket.emit('data', patients["patient_" + i]);
+          }
+        }
+
       });
     }
 
