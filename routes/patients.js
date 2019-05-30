@@ -13,6 +13,7 @@ var httpRequest = new XMLHttpRequest();
 /* Socket setup */
 const server = require('http').createServer(express);
 const io = require('socket.io')(server);
+//io.listen(3000);
 
 var genderTemp = new Array();
 var ageTemp = new Array();
@@ -26,8 +27,6 @@ var lungSoundTemp = new Array();
 
 io.on('connection', socket => {
   socket.on("config", config => {
-
-    console.log(config);
 
     let gender = config.gender;
     let age = config.age;
@@ -58,31 +57,33 @@ io.on('connection', socket => {
 
         if (watching == false) {
           for (let i = 0; i < quantity; i++) {
+            console.log("patient_" + i);
             endPoints.forEach(endpoint => {
+              patient = JSON.stringify(patients["patient_" + i]);
               httpRequest.open('POST', endpoint, false);
-              httpRequest.send(patients["patient_" + i]);
+              httpRequest.send(patient);
+              requestStatus(endpoint, httpRequest.status);
             });
-            console.log(respose);
           }
         }
 
         if (watching == true) {
           for (let i = 0; i < quantity; i++) {
+            console.log("patient_" + i);
             endPoints.forEach(endpoint => {
-              httpRequest.open('POST', endpoint, false);
-              httpRequest.send(patients["patient_" + i]);
+              patient = JSON.stringify(patients["patient_" + i]);
+              httpRequest.open('POST', endpoint, true);
+              httpRequest.send(patient);
+              requestStatus(endpoint, httpRequest.status);
               if (httpRequest.status == '200') {
                 patients["patient_" + i].outcome = 'Sikeres';
               } else {
                 patients["patient_" + i].outcome = 'Sikertelen';
               }
             });
-            patients["patient_" + i].outcome = 'Sikertelen'
-            console.log('Patient sent: ', patients["patient_" + i]);
             socket.emit('data', patients["patient_" + i]);
           }
         }
-
       });
     }
 
@@ -100,33 +101,35 @@ io.on('connection', socket => {
 
         if (watching == false) {
           for (let i = 0; i < quantity; i++) {
+            console.log("patient_" + i);
             endPoints.forEach(endpoint => {
+              patient = JSON.stringify(patients["patient_" + i]);
               httpRequest.open('POST', endpoint, false);
-              httpRequest.send(patients["patient_" + i]);
+              httpRequest.send(patient);
+              requestStatus(endpoint, httpRequest.status);
             });
-            console.log(respose);
           }
         }
 
         if (watching == true) {
           for (let i = 0; i < quantity; i++) {
+            console.log("patient_" + i);
             endPoints.forEach(endpoint => {
-              httpRequest.open('POST', endpoint, false);
-              httpRequest.send(patients["patient_" + i]);
+              patient = JSON.stringify(patients["patient_" + i]);
+              httpRequest.open('POST', endpoint, true);
+              httpRequest.send(patient);
+              requestStatus(endpoint, httpRequest.status);
               if (httpRequest.status == '200') {
                 patients["patient_" + i].outcome = 'Sikeres';
               } else {
                 patients["patient_" + i].outcome = 'Sikertelen';
               }
             });
-            console.log('Patient sent: ', patients["patient_" + i]);
             socket.emit('data', patients["patient_" + i]);
           }
         }
-
       });
     }
-
   });
 });
 
@@ -134,7 +137,6 @@ async function getData(gender, age, height, weight, systolicBloodPressure, diast
 
   if (gender) {
     await getGender(quantity, gender).then(gender => {
-      console.log(gender);
       for (let i = 0; i < quantity; i++) {
         if (gender[i].gender === 'F') {
           genderTemp[i] = 'Nő';
@@ -149,7 +151,6 @@ async function getData(gender, age, height, weight, systolicBloodPressure, diast
 
   if (age) {
     await getAge(quantity, age).then(age => {
-      console.log(age);
       for (let i = 0; i < quantity; i++) {
         ageTemp[i] = age[i].age;
       }
@@ -160,7 +161,6 @@ async function getData(gender, age, height, weight, systolicBloodPressure, diast
 
   if (height) {
     await getHeight(quantity, height).then(height => {
-      console.log(height);
       for (let i = 0; i < quantity; i++) {
         heightTemp[i] = height[i].valuenum;
       }
@@ -171,7 +171,6 @@ async function getData(gender, age, height, weight, systolicBloodPressure, diast
 
   if (weight) {
     await getWeight(quantity, weight).then(weight => {
-      console.log(weight);
       for (let i = 0; i < quantity; i++) {
         weightTemp[i] = weight[i].valuenum;
       }
@@ -187,7 +186,6 @@ async function getData(gender, age, height, weight, systolicBloodPressure, diast
       }
     });
     await getDiastolicBloodPressure(quantity, diastolicBloodPressure).then(diastolicBloodPressure => {
-      console.log(diastolicBloodPressure);
       for (let i = 0; i < quantity; i++) {
         bloodPressureTemp[i] += diastolicBloodPressure[i].valuenum;
       }
@@ -198,7 +196,6 @@ async function getData(gender, age, height, weight, systolicBloodPressure, diast
 
   if (bloodGlucose) {
     await getBloodGlucose(quantity, bloodGlucose).then(bloodGlucose => {
-      console.log(bloodGlucose);
       for (let i = 0; i < quantity; i++) {
         bloodGlucoseTemp[i] = +((bloodGlucose[i].valuenum / 18).toFixed(1));
       }
@@ -209,7 +206,6 @@ async function getData(gender, age, height, weight, systolicBloodPressure, diast
 
   if (bloodOxygen) {
     await getBloodOxygen(quantity, bloodOxygen).then(bloodOxygen => {
-      console.log(bloodOxygen);
       for (let i = 0; i < quantity; i++) {
         bloodOxygenTemp[i] = bloodOxygen[i].valuenum;
       }
@@ -220,7 +216,6 @@ async function getData(gender, age, height, weight, systolicBloodPressure, diast
 
   if (tobaccoUse) {
     await getTobaccoUse(quantity, tobaccoUse).then(tobaccoUse => {
-      console.log(tobaccoUse);
       for (let i = 0; i < quantity; i++) {
         if (tobaccoUse[i].value === 'Never used') {
           tobaccoUseTemp[i] = 'Nem doházik';
@@ -242,7 +237,6 @@ async function getData(gender, age, height, weight, systolicBloodPressure, diast
 
   if (lungSound) {
     await getLeftLowerLung(quantity, lungSound).then(leftLowerLung => {
-      console.log(leftLowerLung);
       for (let i = 0; i < quantity; i++) {
         if (leftLowerLung[i].value === 'Bronchial') {
           lungSoundTemp[i] = 'Hörgő' + ' / ';
@@ -283,7 +277,6 @@ async function getData(gender, age, height, weight, systolicBloodPressure, diast
     });
 
     await getLeftUpperLung(quantity, lungSound).then(leftUpperLung => {
-      console.log(leftUpperLung);
       for (let i = 0; i < quantity; i++) {
         if (leftUpperLung[i].value === 'Bronchial') {
           lungSoundTemp[i] += 'Hörgő' + ' / ';
@@ -324,7 +317,6 @@ async function getData(gender, age, height, weight, systolicBloodPressure, diast
     });
 
     await getRightLowerLung(quantity, lungSound).then(rightLowerLung => {
-      console.log(rightLowerLung);
       for (let i = 0; i < quantity; i++) {
         if (rightLowerLung[i].value === 'Bronchial') {
           lungSoundTemp[i] += 'Hörgő' + ' / ';
@@ -365,7 +357,6 @@ async function getData(gender, age, height, weight, systolicBloodPressure, diast
     });
 
     await getRightUpperLung(quantity, lungSound).then(rightUpperLung => {
-      console.log(rightUpperLung);
       for (let i = 0; i < quantity; i++) {
         if (rightUpperLung[i].value === 'Bronchial') {
           lungSoundTemp[i] += 'Hörgő';
@@ -729,19 +720,68 @@ async function makePatient(quantity) {
 
 function fileName() {
   let today = new Date();
-  let yyyy = today.getFullYear();
-  let mm = today.getMonth() + 1;
-  let dd = today.getDate();
+  let YYYY = today.getFullYear();
+  let MM = today.getMonth() + 1;
+  let DD = today.getDate();
+  let hh = today.getHours();
+  let mm = today.getMinutes();
 
-  if (dd < 10) {
-    dd = '0' + dd;
+  if (DD < 10) {
+    DD = '0' + DD;
+  }
+
+  if (MM < 10) {
+    MM = '0' + MM;
+  }
+
+  if (hh < 10) {
+    hh = '0' + hh;
   }
 
   if (mm < 10) {
     mm = '0' + mm;
   }
 
-  return 'patients_' + yyyy + '-' + mm + '-' + dd + '.json';
+  return 'patients_' + YYYY + '-' + MM + '-' + DD + '_' + hh + ':' + mm + '.json';
+}
+
+function requestStatus(endpoint, status) {
+  if (status == 200) {
+    console.log("200 OK - Successful POST request to " + endpoint);
+  }
+  if (status == 400) {
+    console.log("400 Bad Request - Unsuccessful POST request to " + endpoint);
+  }
+  if (status == 401) {
+    console.log("401 Unauthorized - Unsuccessful POST request to " + endpoint);
+  }
+  if (status == 403) {
+    console.log("403 Forbidden - Unsuccessful POST request to " + endpoint);
+  }
+  if (status == 404) {
+    console.log("404 Not Found - Unsuccessful POST request to " + endpoint);
+  }
+  if (status == 405) {
+    console.log("405 Method Not Allowed - Unsuccessful POST request to " + endpoint);
+  }
+  if (status == 500) {
+    console.log("500 Internal Server Error - Unsuccessful POST request to " + endpoint);
+  }
+  if (status == 501) {
+    console.log("501 Not Implemented - Unsuccessful POST request to " + endpoint);
+  }
+  if (status == 502) {
+    console.log("502 Bad Gateway - Unsuccessful POST request to " + endpoint);
+  }
+  if (status == 503) {
+    console.log("503 Service Unavailable - Unsuccessful POST request to " + endpoint);
+  }
+  if (status == 504) {
+    console.log("504 Gateway Timeout - Unsuccessful POST request to " + endpoint);
+  }
+  if (status == 0) {
+    console.log("Unexpected Error - Unsuccessful POST request to " + endpoint);
+  }
 }
 
 server.listen(3001);
